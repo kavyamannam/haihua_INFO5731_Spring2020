@@ -1,0 +1,867 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/kavyamannam/haihua_INFO5731_Spring2020/blob/main/INFO5731\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "USSdXHuqnwv9"
+      },
+      "source": [
+        "# **INFO5731 Assignment Three**\n",
+        "\n",
+        "In this assignment, you are required to conduct information extraction, semantic analysis based on **the dataset you collected from assignment two**. You may use scipy and numpy package in this assignment."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YWxodXh5n4xF"
+      },
+      "source": [
+        "# **Question 1: Understand N-gram**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TenBkDJ5n95k"
+      },
+      "source": [
+        "(45 points). Write a python program to conduct N-gram analysis based on the dataset in your assignment two:\n",
+        "\n",
+        "(1) Count the frequency of all the N-grams (N=3).\n",
+        "\n",
+        "(2) Calculate the probabilities for all the bigrams in the dataset by using the fomular count(w2 w1) / count(w2). For example, count(really like) / count(really) = 1 / 3 = 0.33.\n",
+        "\n",
+        "(3) Extract all the **noun phrases** and calculate the relative probabilities of each review in terms of other reviews (abstracts, or tweets) by using the fomular frequency (noun phrase) / max frequency (noun phrase) on the whole dataset. Print out the result in a table with column name the all the noun phrases and row name as all the 100 reviews (abstracts, or tweets). \n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "PuFPKhC0m1fd",
+        "outputId": "f0b85d60-1d1a-4836-e88f-e0babf773507"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Collecting transformers\n",
+            "  Downloading transformers-4.24.0-py3-none-any.whl (5.5 MB)\n",
+            "\u001b[K     |████████████████████████████████| 5.5 MB 8.1 MB/s \n",
+            "\u001b[?25hRequirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.7/dist-packages (from transformers) (1.21.6)\n",
+            "Collecting huggingface-hub<1.0,>=0.10.0\n",
+            "  Downloading huggingface_hub-0.10.1-py3-none-any.whl (163 kB)\n",
+            "\u001b[K     |████████████████████████████████| 163 kB 26.4 MB/s \n",
+            "\u001b[?25hCollecting tokenizers!=0.11.3,<0.14,>=0.11.1\n",
+            "  Downloading tokenizers-0.13.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (7.6 MB)\n",
+            "\u001b[K     |████████████████████████████████| 7.6 MB 41.3 MB/s \n",
+            "\u001b[?25hRequirement already satisfied: filelock in /usr/local/lib/python3.7/dist-packages (from transformers) (3.8.0)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.7/dist-packages (from transformers) (2.23.0)\n",
+            "Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.7/dist-packages (from transformers) (4.64.1)\n",
+            "Requirement already satisfied: regex!=2019.12.17 in /usr/local/lib/python3.7/dist-packages (from transformers) (2022.6.2)\n",
+            "Requirement already satisfied: importlib-metadata in /usr/local/lib/python3.7/dist-packages (from transformers) (4.13.0)\n",
+            "Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.7/dist-packages (from transformers) (6.0)\n",
+            "Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.7/dist-packages (from transformers) (21.3)\n",
+            "Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.7/dist-packages (from huggingface-hub<1.0,>=0.10.0->transformers) (4.1.1)\n",
+            "Requirement already satisfied: pyparsing!=3.0.5,>=2.0.2 in /usr/local/lib/python3.7/dist-packages (from packaging>=20.0->transformers) (3.0.9)\n",
+            "Requirement already satisfied: zipp>=0.5 in /usr/local/lib/python3.7/dist-packages (from importlib-metadata->transformers) (3.10.0)\n",
+            "Requirement already satisfied: idna<3,>=2.5 in /usr/local/lib/python3.7/dist-packages (from requests->transformers) (2.10)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.7/dist-packages (from requests->transformers) (2022.9.24)\n",
+            "Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /usr/local/lib/python3.7/dist-packages (from requests->transformers) (1.24.3)\n",
+            "Requirement already satisfied: chardet<4,>=3.0.2 in /usr/local/lib/python3.7/dist-packages (from requests->transformers) (3.0.4)\n",
+            "Installing collected packages: tokenizers, huggingface-hub, transformers\n",
+            "Successfully installed huggingface-hub-0.10.1 tokenizers-0.13.2 transformers-4.24.0\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[nltk_data] Downloading package punkt to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping tokenizers/punkt.zip.\n",
+            "[nltk_data] Downloading package wordnet to /root/nltk_data...\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Write your code here\n",
+        "!pip install transformers\n",
+        "\n",
+        "import warnings\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "import torch\n",
+        "import transformers\n",
+        "from gensim.models.phrases import Phrases, Phraser\n",
+        "from gensim.models import Word2Vec\n",
+        "from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint\n",
+        "from tensorflow.keras.layers import Dense\n",
+        "from tensorflow.keras.models import Sequential\n",
+        "import tensorflow as tf\n",
+        "from nltk.classify import NaiveBayesClassifier\n",
+        "from nltk.sentiment import SentimentAnalyzer\n",
+        "import nltk\n",
+        "from collections import Counter\n",
+        "from sklearn.pipeline import Pipeline, make_pipeline\n",
+        "from sklearn.metrics import accuracy_score, confusion_matrix\n",
+        "from sklearn.feature_selection import chi2\n",
+        "from sklearn.decomposition import PCA\n",
+        "from sklearn.base import BaseEstimator, TransformerMixin\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, AdaBoostRegressor\n",
+        "from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import time\n",
+        "import pickle\n",
+        "import os\n",
+        "\n",
+        "\n",
+        "nltk.download('punkt')\n",
+        "nltk.download('wordnet')\n",
+        "\n",
+        "\n",
+        "warnings.simplefilter(action='ignore', category=FutureWarning)\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = pd.read_csv(\"https://raw.githubusercontent.com/sravani-info5731-spring2022/sravani_info5731_spring2022/main/twitter.csv\", on_bad_lines='skip')\n",
+        "df[\"'polarity'\"] = df[\"'polarity'\"].map({0: 0, 2: 1, 4: 2})\n",
+        "df.dropna(inplace=True)\n",
+        "pd.set_option('display.max_colwidth', None)\n",
+        "df.head(2)"
+      ],
+      "metadata": {
+        "id": "1f9b6gaqg_9M"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "train, test = train_test_split(df[[\"'text'\", \"'polarity'\"]], random_state=0)\n",
+        "X_train = train[\"'text'\"]\n",
+        "X_test = test[\"'text'\"]\n",
+        "y_train = train[\"'polarity'\"]\n",
+        "y_test = test[\"'polarity'\"]"
+      ],
+      "metadata": {
+        "id": "Kz1RgXxrhC4V"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_accuracy():\n",
+        "    pipe.fit(X_train, y_train)\n",
+        "    y_pred = pipe.predict(X_test)\n",
+        "    return round(accuracy_score(y_pred, y_test), 3)"
+      ],
+      "metadata": {
+        "id": "tAczRATHhE98"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "count_vectorizer = CountVectorizer(max_features=1000)\n",
+        "random_forest = RandomForestClassifier(max_depth=10, n_estimators=10)"
+      ],
+      "metadata": {
+        "id": "9Do6Kg2zhPwk"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pipe = make_pipeline(count_vectorizer, random_forest)\n"
+      ],
+      "metadata": {
+        "id": "lS_9_JrhhQeP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "get_accuracy()"
+      ],
+      "metadata": {
+        "id": "btx-VgpshQxa"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_pred = pipe.predict(X_test)"
+      ],
+      "metadata": {
+        "id": "1XU7IxC6hQz3"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "round(pd.Series(y_train).value_counts(normalize=True), 2)"
+      ],
+      "metadata": {
+        "id": "ASro_tyAhQ2p"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "round(pd.Series(y_pred).value_counts(normalize=True), 2)"
+      ],
+      "metadata": {
+        "id": "et8mdCWMhQ5P"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "random_forest.set_params(class_weight='balanced')\n",
+        "print(get_accuracy())\n",
+        "random_forest.set_params(class_weight='balanced_subsample')\n",
+        "print(get_accuracy())"
+      ],
+      "metadata": {
+        "id": "IQKV9MJ4hQ7v"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "labels = [0, 1, 2]\n",
+        "y_pred = pipe.predict(X_test)\n",
+        "cm = confusion_matrix(y_test, y_pred, labels=labels)\n",
+        "fig = plt.figure(figsize=(10, 5))\n",
+        "ax = fig.add_subplot(111)\n",
+        "cax = ax.matshow(cm)\n",
+        "plt.title('Confusion matrix')\n",
+        "fig.colorbar(cax)\n",
+        "ax.set_xticklabels([''] + labels)\n",
+        "ax.set_yticklabels([''] + labels)\n",
+        "plt.xlabel('Predicted')\n",
+        "plt.ylabel('True')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "d9TgLExbhQ-e"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "cdP-cH2rhRA4"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "tGKRLfHwhRDR"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "mfKIHEPbhRGB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AfpMRCrRwN6Z"
+      },
+      "source": [
+        "# **Question 2: Undersand TF-IDF and Document representation**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1dCQEbDawWCw"
+      },
+      "source": [
+        "(20 points). Starting from the documents (all the reviews, or abstracts, or tweets) collected for assignment two, write a python program: \n",
+        "\n",
+        "(1) To build the **documents-terms weights (tf*idf) matrix bold text**.\n",
+        "\n",
+        "(2) To rank the documents with respect to query (design a query by yourself, for example, \"An Outstanding movie with a haunting performance and best character development\") by using **cosine similarity**."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "vATjQNTY8buA"
+      },
+      "outputs": [],
+      "source": [
+        "# Write your code here\n",
+        "# taken from sklearn webpage\n",
+        "from nltk import word_tokenize\n",
+        "from nltk.stem import WordNetLemmatizer\n",
+        "\n",
+        "\n",
+        "class LemmaTokenizer:\n",
+        "    def __init__(self):\n",
+        "        self.wnl = WordNetLemmatizer()\n",
+        "\n",
+        "    def __call__(self, doc):\n",
+        "        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pipe[0].set_params(tokenizer=LemmaTokenizer())\n",
+        "get_accuracy()"
+      ],
+      "metadata": {
+        "id": "rLVJsJUJhp0k"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "tfidf_vectorizer = TfidfVectorizer()\n",
+        "pipe.steps[0] = ('vectorizer', tfidf_vectorizer)\n",
+        "get_accuracy()"
+      ],
+      "metadata": {
+        "id": "g_8qlbyBhsMq"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "ada_boost = AdaBoostClassifier()\n",
+        "pipe.steps[1] = ('adaboost', ada_boost)\n",
+        "get_accuracy()"
+      ],
+      "metadata": {
+        "id": "sVAOjse_h2M8"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "count_vectorizer.get_feature_names"
+      ],
+      "metadata": {
+        "id": "CAx-NavRh7PN"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "count_vectorizer = CountVectorizer()\n",
+        "\n",
+        "bow = count_vectorizer.fit_transform(X_train)\n",
+        "\n",
+        "words = count_vectorizer.get_feature_names()\n",
+        "\n",
+        "p_value_limit = 0.95\n",
+        "\n",
+        "dtf_features = pd.DataFrame()\n",
+        "\n",
+        "for cat in range(3):\n",
+        "    _, p = chi2(bow, y_train == cat)\n",
+        "    dtf_features = dtf_features.append(pd.DataFrame(\n",
+        "        {\"feature\": words, \"score\": 1-p, \"y\": cat}))\n",
+        "    dtf_features = dtf_features.sort_values([\"y\", \"score\"],\n",
+        "                                            ascending=[True, False])\n",
+        "    dtf_features = dtf_features[dtf_features[\"score\"] > p_value_limit]\n",
+        "\n",
+        "X_names = dtf_features[\"feature\"].unique().tolist()\n",
+        "\n",
+        "pipe['vectorizer'].set_params(vocabulary=X_names)\n",
+        "\n",
+        "get_accuracy()"
+      ],
+      "metadata": {
+        "id": "SK1QE74lh9Xl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "mc = ModelCheckpoint('best_model.h5', monitor='val_accuracy',\n",
+        "                     mode='max', verbose=1, save_best_only=True)"
+      ],
+      "metadata": {
+        "id": "OE27nLAMh_0H"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def fit_sequential(X_train, X_test, sequential=None, epochs=20, patience=5):\n",
+        "\n",
+        "    if sequential is None:\n",
+        "        input_size = X_train.shape[1]\n",
+        "\n",
+        "        sequential = tf.keras.models.Sequential([\n",
+        "            tf.keras.layers.Flatten(input_shape=(input_size, )),\n",
+        "            tf.keras.layers.Dense(128),\n",
+        "            tf.keras.layers.Dropout(0.2),\n",
+        "            tf.keras.layers.Dense(3, activation='sigmoid')\n",
+        "        ])\n",
+        "        loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(\n",
+        "            from_logits=True)\n",
+        "        sequential.compile(optimizer='adam', loss=loss_fn,\n",
+        "                           metrics=['accuracy'])\n",
+        "        global mc\n",
+        "        mc = ModelCheckpoint('best_model.h5', monitor='val_accuracy',\n",
+        "                             mode='max', verbose=1, save_best_only=True)\n",
+        "\n",
+        "    es = EarlyStopping(monitor='val_accuracy', mode='max',\n",
+        "                       verbose=1, patience=patience)\n",
+        "    sequential.fit(X_train, np.array(y_train), epochs=epochs, verbose=1,\n",
+        "                   validation_data=(X_test, np.array(y_test)), callbacks=[es, mc])\n",
+        "    sequential.load_weights('best_model.h5')\n",
+        "    return sequential"
+      ],
+      "metadata": {
+        "id": "sc2m-R8riCas"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vectorizer = TfidfVectorizer()"
+      ],
+      "metadata": {
+        "id": "w77TK-Y3iFDb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def convert_sparse_matrix_to_sparse_tensor(X):\n",
+        "    coo = X.tocoo()\n",
+        "    indices = np.mat([coo.row, coo.col]).transpose()\n",
+        "    return tf.sparse.reorder(tf.SparseTensor(indices, coo.data, coo.shape))"
+      ],
+      "metadata": {
+        "id": "JsduVRrLiHUc"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_train_vectorized = vectorizer.fit_transform(X_train).toarray()\n",
+        "X_test_vectorized = vectorizer.transform(X_test).toarray()"
+      ],
+      "metadata": {
+        "id": "NPisChOqiJ8D"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sequential = fit_sequential(X_train_vectorized, X_test_vectorized)"
+      ],
+      "metadata": {
+        "id": "ukkldo1iiOVv"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7xtxj2ggfo7l"
+      },
+      "source": [
+        "# **Question 3: Create your own word embedding model**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rcwliIg5fo7l"
+      },
+      "source": [
+        "(20 points). Use the data you collected for assignment two to build a word embedding model: \n",
+        "\n",
+        "(1) Train a 300-dimension word embedding (it can be word2vec, glove, ulmfit, bert, or others).\n",
+        "\n",
+        "(2) Visualize the word embedding model you created.\n",
+        "\n",
+        "Reference: https://machinelearningmastery.com/develop-word-embeddings-python-gensim/\n",
+        "\n",
+        "Reference: https://jaketae.github.io/study/word2vec/"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "euPLRSpffo7l"
+      },
+      "outputs": [],
+      "source": [
+        "# Write your code here\n",
+        "class W2VTransformer(BaseEstimator, TransformerMixin):\n",
+        "    def __init__(self, size):\n",
+        "        self.size = size\n",
+        "        pass\n",
+        "\n",
+        "    def fit(self, X, y=None):\n",
+        "        self.model = Word2Vec(min_count=1,\n",
+        "                              window=2,\n",
+        "                              size=self.size,\n",
+        "                              sample=6e-5,\n",
+        "                              alpha=0.03,\n",
+        "                              min_alpha=0.0007,\n",
+        "                              negative=20)\n",
+        "        sentences = [row.split() for row in X]\n",
+        "\n",
+        "        self.model.build_vocab(sentences)\n",
+        "        self.model.train(\n",
+        "            sentences, total_examples=self.model.corpus_count, epochs=self.model.epochs)\n",
+        "        return self\n",
+        "\n",
+        "    def get_vector(self, sentence):\n",
+        "        relevant_words_vectors = [self.model.wv[x]\n",
+        "                                  for x in sentence.split() if x in self.model.wv.vocab]\n",
+        "        if not relevant_words_vectors:\n",
+        "            return np.zeros(self.model.vector_size)  # .astype('float32')\n",
+        "        return np.mean(relevant_words_vectors, axis=0)\n",
+        "\n",
+        "    def transform(self, X):\n",
+        "        arr = np.array([])\n",
+        "        for elem in X:\n",
+        "            arr = np.concatenate([arr, self.get_vector(elem)])\n",
+        "        return arr.reshape(-1, self.size)\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vectorizer = W2VTransformer(4)\n",
+        "X_train_vectorized = vectorizer.fit_transform(X_train)\n",
+        "X_test_vectorized = vectorizer.transform(X_test)"
+      ],
+      "metadata": {
+        "id": "HzHWXEoJiVq4"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sequential = fit_sequential(X_train_vectorized, X_test_vectorized)"
+      ],
+      "metadata": {
+        "id": "ksdNVz0xiYjP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pca = PCA(n_components=2)\n",
+        "X_train_vectorized_2d = pca.fit_transform(X_train_vectorized)"
+      ],
+      "metadata": {
+        "id": "684xNGRtibvP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.figure(figsize=(14, 8))\n",
+        "_ = sns.scatterplot(\n",
+        "    X_train_vectorized_2d[:, 0], X_train_vectorized_2d[:, 1], hue=y_train)"
+      ],
+      "metadata": {
+        "id": "hYUwygJ-if51"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model_class, tokenizer_class, pretrained_weights = (\n",
+        "    transformers.DistilBertModel, transformers.DistilBertTokenizer, 'distilbert-base-uncased')\n",
+        "tokenizer = tokenizer_class.from_pretrained(pretrained_weights)\n",
+        "model = model_class.from_pretrained(pretrained_weights)"
+      ],
+      "metadata": {
+        "id": "17EzDQw7iifn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "kaggle_test = pd.read_csv(\"test.tsv\", sep='\\t', index_col=\"PhraseId\")\n",
+        "\n",
+        "all_sentences = X_train.append([X_test, kaggle_test.Phrase])\n",
+        "\n",
+        "tokenized = all_sentences.apply(\n",
+        "    lambda x: tokenizer.encode(x, add_special_tokens=True))\n",
+        "\n",
+        "max_len = max(tokenized.apply(len))\n",
+        "padded = np.array([row + [0]*(max_len-len(row)) for row in tokenized])\n",
+        "\n",
+        "attention_mask = np.where(padded != 0, 1, 0)\n",
+        "\n",
+        "input_ids = torch.tensor(padded)\n",
+        "input_ids = torch.tensor(input_ids).to(torch.int64)\n",
+        "\n",
+        "attention_mask = torch.tensor(attention_mask)\n",
+        "\n",
+        "vector_length = model(input_ids[:1], attention_mask=attention_mask[:1])[\n",
+        "    0].shape[2]\n",
+        "\n",
+        "vectors = np.zeros(shape=(0, vector_length))"
+      ],
+      "metadata": {
+        "id": "YeKp5P_kilVJ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_vectors():\n",
+        "    start = time.time()\n",
+        "    k = 1000\n",
+        "    for i in range(0, len(all_sentences), k):\n",
+        "        with torch.no_grad():\n",
+        "            last_hidden_states = model(\n",
+        "                input_ids[i:i+k], attention_mask=input_ids[i:i+k])\n",
+        "        vectors = np.concatenate([vectors, last_hidden_states[0].numpy(\n",
+        "        )[:, 0, :]]) if i > 0 else last_hidden_states[0].numpy()[:, 0, :]\n",
+        "    return vectors"
+      ],
+      "metadata": {
+        "id": "yRonanTlitTD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "if os.path.isfile(\"bert_vectors.csv\"):\n",
+        "    bert_vectors_df = pd.read_csv(\"bert_vectors.csv\")\n",
+        "    vectors = bert_vectors_df.iloc[:, 1:]\n",
+        "elif os.path.isfile(\"bert_vectors.pickle\"):\n",
+        "    with open('bert_vectors.pickle', 'rb') as handle:\n",
+        "        vectors = pickle.load(handle)\n",
+        "else:\n",
+        "    vectors = get_vectors()\n",
+        "    with open('bert_vectors.pickle', 'wb') as handle:\n",
+        "        pickle.dump(vectors, handle)"
+      ],
+      "metadata": {
+        "id": "TBhRPwT4iufn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_train_vectorized = vectors[:len(X_train)]\n",
+        "X_test_vectorized = vectors[len(X_train):len(X_train)+len(X_test)]\n",
+        "kaggle_test_vectorized = vectors[len(X_train)+len(X_test):]"
+      ],
+      "metadata": {
+        "id": "lVmbxHDyix3s"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sequential = fit_sequential(X_train_vectorized, X_test_vectorized, epochs=10)"
+      ],
+      "metadata": {
+        "id": "Pw6e9R_di0wo"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "E5mmYIfN8eYV"
+      },
+      "source": [
+        "# **Question 4: Create your own training and evaluation data for sentiment analysis**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hsi2y4z88ngX"
+      },
+      "source": [
+        "(15 points). **You dodn't need to write program for this question!** Read each review (abstract or tweet) you collected in detail, and annotate each review with a sentiment (positive, negative, or neutral). Save the annotated dataset into a csv file with three columns (first column: document_id, clean_text, sentiment), upload the csv file to GitHub and submit the file link blew. This datset will be used for assignment four: sentiment analysis and text classification. \n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "XfvMKJjIXS5G"
+      },
+      "outputs": [],
+      "source": [
+        "# The GitHub link of your final csv file\n",
+        "vectorizer = W2VTransformer(4)\n",
+        "X_train_vectorized = vectorizer.fit_transform(X_train)\n",
+        "X_test_vectorized = vectorizer.transform(X_test)\n",
+        "sequential = fit_sequential(X_train_vectorized, X_test_vectorized)\n",
+        "mapper = {0: \"negative\", 1: \"neutral\", 2: \"positive\"}\n",
+        "\n",
+        "\n",
+        "def get_sentiment(model, vectorizer, mapper, text):\n",
+        "    return mapper.get(np.argmax(max(model.predict(vectorizer.transform(pd.Series([text]))))))\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "get_sentiment(sequential, vectorizer, mapper, \"The new big one is huge\")"
+      ],
+      "metadata": {
+        "id": "EqpNLorFi8Ly"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#LINK:"
+      ],
+      "metadata": {
+        "id": "idpnNffYi-0y"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "collapsed_sections": [],
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3 (ipykernel)",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.9.12"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
